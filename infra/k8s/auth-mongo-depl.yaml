@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: auth-mongo-depl
+spec:
+  serviceName: auth-mongo-srv
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-mongo
+  template:
+    metadata:
+      labels:
+        app: auth-mongo
+        selector: auth-mongo
+    spec:
+      containers:
+        - name: auth-mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: pvc
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-mongo-srv
+spec:
+  selector:
+    app: auth-mongo
+  ports:
+    - name: auth-mongo-db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017

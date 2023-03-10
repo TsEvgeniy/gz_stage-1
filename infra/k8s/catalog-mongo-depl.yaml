@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: catalog-mongo-depl
+spec:
+  serviceName: catalog-mongo-srv
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-mongo
+  template:
+    metadata:
+      labels:
+        app: catalog-mongo
+        selector: catalog-mongo
+    spec:
+      containers:
+        - name: catalog-mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: pvc
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-mongo-srv
+spec:
+  selector:
+    app: catalog-mongo
+  ports:
+    - name: catalog-mongo-db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
