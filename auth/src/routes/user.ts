@@ -1,8 +1,5 @@
 import express from 'express';
-import {
-  validateRequest,
-  currentUser
-} from '@good_zone/common';
+import { validateRequest, currentUser } from '@good_zone/common';
 import {
   addAddress,
   addMoreUserData,
@@ -12,8 +9,11 @@ import {
   userProfile,
   userSignin,
   userSignout,
-  userSignup
-} from "../controllers/user";
+  userSignup,
+  updateUserData,
+  updateUserAddress,
+  deleteUserAddress,
+} from '../controllers/user';
 
 const router = express.Router();
 
@@ -26,5 +26,8 @@ router.post('/api/users/address', currentUser, addAddress);
 router.post('/api/users/address/:id', currentUser, makeAddressDefault);
 router.get('/api/users/addresses', currentUser, getAllUserAddresses);
 router.post('/api/users/additional-info', currentUser, addMoreUserData);
+router.put('/api/users/additional-info', currentUser, updateUserData);
+router.put('/api/users/address', currentUser, updateUserAddress);
+router.delete('/api/users/address/:id', currentUser, deleteUserAddress);
 
 export { router as userRouter };

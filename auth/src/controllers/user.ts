@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/user';
-import { Address } from "../models/address";
-import { BadRequestError } from "@good_zone/common";
-import { Password } from "../services/password";
+import { Address } from '../models/address';
+import { BadRequestError, NotFoundError } from '@good_zone/common';
+import { Password } from '../services/password';
 
 export const userSignup = async (req: Request, res: Response) => {
   const { phone, password } = req.body;
@@ -13,18 +13,21 @@ export const userSignup = async (req: Request, res: Response) => {
 
   const user = User.build({
     phone,
-    password
+    password,
   });
 
   await user.save();
 
-  const userJwt = jwt.sign({
-    id: user.id,
-    phone: user.phone
-  }, process.env.JWT_KEY!);
+  const userJwt = jwt.sign(
+    {
+      id: user.id,
+      phone: user.phone,
+    },
+    process.env.JWT_KEY!
+  );
 
   req.session = {
-    jwt: userJwt
+    jwt: userJwt,
   };
 
   res.status(201).send(user);
@@ -44,13 +47,16 @@ export const userSignin = async (req: Request, res: Response) => {
 
   if (!passwordMatch) throw new BadRequestError('Invalid creds!');
 
-  const userJwt = jwt.sign({
-    id: existingUser.id,
-    phone: existingUser.phone
-  }, process.env.JWT_KEY!);
+  const userJwt = jwt.sign(
+    {
+      id: existingUser.id,
+      phone: existingUser.phone,
+    },
+    process.env.JWT_KEY!
+  );
 
   req.session = {
-    jwt: userJwt
+    jwt: userJwt,
   };
 
   res.status(200).send(existingUser);
@@ -58,12 +64,11 @@ export const userSignin = async (req: Request, res: Response) => {
 
 export const userSignout = async (req: Request, res: Response) => {
   req.session = null;
-  res.send({})
+  res.send({});
 };
 
 export const userProfile = async (req: Request, res: Response) => {
-  const profile = await User.findById(req.currentUser!.id)
-    .populate("address");
+  const profile = await User.findById(req.currentUser!.id).populate('address');
   res.send(profile);
 };
 
@@ -77,14 +82,17 @@ export const addAddress = async (req: Request, res: Response) => {
 
   if (userAddress.length >= 1) {
     // const newValue = { $set: { isMain: false } };
-    await Address.updateMany({ customer: req.currentUser!.id }, { $set: { isMain: false }});
+    await Address.updateMany(
+      { customer: req.currentUser!.id },
+      { $set: { isMain: false } }
+    );
 
     const newAddress = Address.build({
       street,
       postalCode,
       city,
       country,
-      customer: req.currentUser!.id
+      customer: req.currentUser!.id,
     });
 
     await newAddress.save();
@@ -98,7 +106,7 @@ export const addAddress = async (req: Request, res: Response) => {
       postalCode,
       city,
       country,
-      customer: req.currentUser!.id
+      customer: req.currentUser!.id,
     });
 
     await newAddress.save();
@@ -117,8 +125,11 @@ export const makeAddressDefault = async (req: Request, res: Response) => {
 
   if (!profile) throw new Error('not found!');
 
-  await Address.updateMany({ customer: req.currentUser!.id }, { $set: { isMain: false }})
-  await Address.updateOne( { _id: req.params.id }, { isMain: true });
+  await Address.updateMany(
+    { customer: req.currentUser!.id },
+    { $set: { isMain: false } }
+  );
+  await Address.updateOne({ _id: req.params.id }, { isMain: true });
 
   res.send({});
 };
@@ -139,10 +150,63 @@ export const addMoreUserData = async (req: Request, res: Response) => {
     name,
     surname,
     email,
-    date
+    date,
   });
 
   await profile.save();
 
   res.send(profile);
+};
+
+export const updateUserData = async (req: Request, res: Response) => {
+  const { name, surname, email, date } = req.body;
+  const profile = await User.findById(req.currentUser!.id);
+
+  if (!profile) throw new NotFoundError();
+
+  profile.set({
+    name,
+    surname,
+    email,
+    date,
+  });
+
+  await profile.save();
+
+  res.send(profile);
+};
+
+export const updateUserAddress = async (req: Request, res: Response) => {
+  const { street, postalCode, city, country, _id } = req.body;
+  const profile = await User.findById(req.currentUser!.id);
+
+  if (!profile) throw new NotFoundError();
+
+  const address = await Address.findById(_id);
+
+  if (!address) throw new NotFoundError();
+
+  address.set({
+    street,
+    postalCode,
+    city,
+    country,
+  });
+
+  await address.save();
+
+  res.send(address);
+};
+
+export const deleteUserAddress = async (req: Request, res: Response) => {
+  const profile = await User.findById(req.currentUser!.id);
+
+  if (!profile) throw new NotFoundError();
+
+  const address = await Address.findById(req.params.id);
+  //@ts-ignore
+  if (address.isMain) console.log('cant remove main address');
+  else await Address.findByIdAndDelete(req.params.id);
+
+  res.send({});
 };

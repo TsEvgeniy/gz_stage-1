@@ -60,12 +60,18 @@ export const createProduct = async (req: Request, res: Response) => {
   // FIX CHECKING IF BRAND AND CATEGORY IS EXIST!!!!!!!!!!
 
   const brands = await Brand.findById(brand);
+
+  if (!brands) throw new BadRequestError('There is no such brand!');
+
   //@ts-ignore
   brands.products.push(product);
   //@ts-ignore
   await brands.save()
 
   const categories = await Category.findById(category);
+
+  if (!categories) throw new BadRequestError('There is no such category!!');
+
   //@ts-ignore
   categories.products.push(product);
   //@ts-ignore

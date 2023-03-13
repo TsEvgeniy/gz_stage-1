@@ -6,6 +6,7 @@ import { ProductAddToWishlistListener } from "./events/listeners/product-add-to-
 import {ProductRemoveFromWishlistListener} from "./events/listeners/product-remove-from-wishlist-listener";
 import {ProductAddToCartListener} from "./events/listeners/product-add-to-cart-listener";
 import {ProductRemoveFromCartListener} from "./events/listeners/product-remove-from-cart-listener";
+import { UserOrderCreatedListener } from './events/listeners/user-order-created-listener';
 
 
 const PORT = 3000;
@@ -27,6 +28,8 @@ const start = async () => {
 
     process.on('SIGINT', () => natsWrapper.client.close());
     process.on('SIGTERM', () => natsWrapper.client.close());
+
+    new UserOrderCreatedListener(natsWrapper.client).listen();
 
     // new TicketCreatedListener(natsWrapper.client).listen();
     new ProductAddToWishlistListener(natsWrapper.client).listen();

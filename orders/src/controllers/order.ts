@@ -9,6 +9,7 @@ import {OrderCancelledPublisher} from "../events/publishers/order-cancelled-publ
 import {natsWrapper} from "../nats-wrapper";
 import {Product} from "../models/product";
 import {OrderCreatedPublisher} from "../events/publishers/order-created-publisher";
+import { UserOrderCreatedPublisher } from '../events/publishers/user-order-created-publisher';
 
 export const getOrders = async (req: Request, res: Response) => {
   const orders = await Order.find({
@@ -74,6 +75,18 @@ export const createOrder = async (req: Request, res: Response) => {
       price: product.price,
     },
   });
+
+  new UserOrderCreatedPublisher(natsWrapper.client).publish({
+    id: order.id,
+    version: order.version,
+    status: order.status,
+    userId: order.userId,
+    product: {
+      id: product.id,
+      price: product.price,
+      title: product.title
+    },
+  })
 
   res.status(201).send(order);
 };
