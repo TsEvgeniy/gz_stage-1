@@ -210,3 +210,9 @@ export const deleteUserAddress = async (req: Request, res: Response) => {
 
   res.send({});
 };
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  const users = await User.find({});
+
+  res.send(users);
+};

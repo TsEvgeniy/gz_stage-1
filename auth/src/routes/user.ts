@@ -13,9 +13,12 @@ import {
   updateUserData,
   updateUserAddress,
   deleteUserAddress,
+  getAllUsers,
 } from '../controllers/user';
 
 const router = express.Router();
+
+router.get('/api/users/', getAllUsers);
 
 router.post('/api/users/signup', validateRequest, userSignup);
 router.get('/api/users/currentuser', currentUser, getCurrentUser);
