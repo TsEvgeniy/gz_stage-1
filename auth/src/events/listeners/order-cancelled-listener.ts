@@ -6,22 +6,21 @@ import {
 } from '@good_zone/common';
 import { Message } from 'node-nats-streaming';
 import { queueGroupName } from './queue-group-name';
-import { Order } from '../../models/order';
+import { User } from '../../models/user';
 
 export class OrderCancelledListener extends Listener<OrderCancelledEvent> {
   subject: Subjects.OrderCancelled = Subjects.OrderCancelled;
   queueGroupName = queueGroupName;
 
   async onMessage(data: OrderCancelledEvent['data'], msg: Message) {
-    const order = await Order.findOne({
-      _id: data.id,
-      version: data.version - 1,
-    });
+    console.log('*** CANCELLED ORDER MESSAGE BROKER AUTH SERVICE ***');
+    console.log(data);
 
-    if (!order) throw new Error('Order not found');
+    const user = await User.findById({ _id: data.userId });
 
-    order.set({ status: OrderStatus.Cancelled });
-    await order.save();
+    console.log('*** USER ***', user);
+    //@ts-ignore
+    console.log('>>>>>>>>>>>>>>>>>>> USERS ORDERS: ', user.orders);
 
     msg.ack();
   }
